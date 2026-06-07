@@ -78,8 +78,7 @@ class SchemaViolation:
 
     def __repr__(self) -> str:
         return (
-            f"SchemaViolation(field={self.field!r},"
-            f" severity={self.severity.value!r})"
+            f"SchemaViolation(field={self.field!r}, severity={self.severity.value!r})"
         )
 
 
@@ -180,8 +179,7 @@ class ToolSchemaValidator:
                 SchemaViolation(
                     field="description",
                     message=(
-                        "'description' is missing"
-                        " (recommended for good LLM behavior)"
+                        "'description' is missing (recommended for good LLM behavior)"
                     ),
                     severity=ViolationSeverity.WARNING,
                 )
@@ -229,13 +227,9 @@ class ToolSchemaValidator:
 
         self._validate_schema(schema, prefix=schema_key, violations=violations)
 
-        return ToolSchemaValidationResult(
-            tool_name=str(name), violations=violations
-        )
+        return ToolSchemaValidationResult(tool_name=str(name), violations=violations)
 
-    def validate_tools(
-        self, tools: Any
-    ) -> list[ToolSchemaValidationResult]:
+    def validate_tools(self, tools: Any) -> list[ToolSchemaValidationResult]:
         """Validate a list of tool dicts.
 
         Args:
@@ -345,6 +339,13 @@ class ToolSchemaValidator:
                                 severity=ViolationSeverity.WARNING,
                             )
                         )
+                    elif not isinstance(prop_schema["type"], str):
+                        violations.append(
+                            SchemaViolation(
+                                field=f"{prop_prefix}.type",
+                                message="property 'type' must be a string",
+                            )
+                        )
                     elif prop_schema["type"] not in _VALID_TYPES:
                         violations.append(
                             SchemaViolation(
@@ -373,8 +374,7 @@ class ToolSchemaValidator:
                             SchemaViolation(
                                 field=f"{prefix}.required",
                                 message=(
-                                    f"'required' entries must be strings,"
-                                    f" got {item!r}"
+                                    f"'required' entries must be strings, got {item!r}"
                                 ),
                             )
                         )

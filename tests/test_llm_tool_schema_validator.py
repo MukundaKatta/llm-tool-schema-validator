@@ -91,9 +91,7 @@ def test_result_errors_and_warnings():
         tool_name="t",
         violations=[
             SchemaViolation(field="a", message="e"),
-            SchemaViolation(
-                field="b", message="w", severity=ViolationSeverity.WARNING
-            ),
+            SchemaViolation(field="b", message="w", severity=ViolationSeverity.WARNING),
         ],
     )
     assert len(r.errors) == 1
@@ -315,6 +313,25 @@ def test_property_missing_type_warning():
 def test_property_invalid_type_value():
     tool = {**_good_tool()}
     tool["input_schema"]["properties"]["query"] = {"type": "invalid_type"}
+    v = ToolSchemaValidator()
+    r = v.validate_tool(tool)
+    assert not r.is_valid
+
+
+def test_property_type_non_string_list():
+    # A non-string 'type' (e.g. a JSON Schema union list) must be reported as a
+    # violation, not raise TypeError when checked against the valid-types set.
+    tool = {**_good_tool()}
+    tool["input_schema"]["properties"]["query"] = {"type": ["string", "null"]}
+    v = ToolSchemaValidator()
+    r = v.validate_tool(tool)
+    assert not r.is_valid
+    assert any(vl.field.endswith(".type") for vl in r.errors)
+
+
+def test_property_type_non_string_dict():
+    tool = {**_good_tool()}
+    tool["input_schema"]["properties"]["query"] = {"type": {"unexpected": "dict"}}
     v = ToolSchemaValidator()
     r = v.validate_tool(tool)
     assert not r.is_valid
